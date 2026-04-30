@@ -557,8 +557,8 @@ export const DocumentSigningSignatureField = ({
 
       {/* Signature Input Sheet (Mobile) */}
       <Sheet open={showSignatureBottomSheet} onOpenChange={setShowSignatureBottomSheet}>
-        <SheetContent position="bottom" size="content" className="px-0 pt-4 [&>button]:hidden">
-          <div className="flex h-full flex-col">
+        <SheetContent position="bottom" size="xl" className="px-0 pt-4 [&>button]:hidden">
+          <div className="flex h-[calc(100%-72px)] flex-col">
             <div className="px-4 pb-2">
               <h2 className="text-xl font-semibold">
                 <Trans>Sign as {recipient.name}</Trans>
