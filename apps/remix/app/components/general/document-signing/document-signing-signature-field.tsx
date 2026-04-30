@@ -557,49 +557,51 @@ export const DocumentSigningSignatureField = ({
 
       {/* Signature Input Sheet (Mobile) */}
       <Sheet open={showSignatureBottomSheet} onOpenChange={setShowSignatureBottomSheet}>
-        <SheetContent position="bottom" size="content" className="px-0 pt-4 [&>button]:hidden">
-          <div className="flex h-full flex-col">
-            <div className="px-4 pb-2">
-              <h2 className="text-xl font-semibold">
-                <Trans>Sign as {recipient.name}</Trans>
-              </h2>
-              <p className="text-muted-foreground text-sm">{recipient.email}</p>
-            </div>
+        <SheetContent
+          position="bottom"
+          size="content"
+          className="flex max-h-[100dvh] flex-col gap-0 overflow-hidden p-0 pt-4 [&>button]:hidden"
+        >
+          <div className="px-4 pb-2">
+            <h2 className="text-xl font-semibold">
+              <Trans>Sign as {recipient.name}</Trans>
+            </h2>
+            <p className="text-muted-foreground text-sm">{recipient.email}</p>
+          </div>
 
-            <div className="mb-4 flex-grow overflow-auto px-4">
-              <SignaturePad
-                className="mt-2"
-                value={localSignature ?? ''}
-                onChange={({ value }) => setLocalSignature(value)}
-                typedSignatureEnabled={typedSignatureEnabled}
-                uploadSignatureEnabled={false}
-                drawSignatureEnabled={drawSignatureEnabled}
-              />
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-4">
+            <SignaturePad
+              className="mt-2"
+              value={localSignature ?? ''}
+              onChange={({ value }) => setLocalSignature(value)}
+              typedSignatureEnabled={typedSignatureEnabled}
+              uploadSignatureEnabled={false}
+              drawSignatureEnabled={drawSignatureEnabled}
+            />
 
-              <DocumentSigningDisclosure className="mt-4" />
-            </div>
+            <DocumentSigningDisclosure className="mt-4" />
+          </div>
 
-            <div className="flex space-x-2 border-t border-gray-200 px-4 pb-0 pt-3">
-              <Button
-                type="button"
-                className="w-full"
-                disabled={!localSignature}
-                onClick={() => onDialogSignClick()}
-              >
-                <Trans>Sign</Trans>
-              </Button>
-              <Button
-                type="button"
-                className="w-full"
-                variant="secondary"
-                onClick={() => {
-                  setShowSignatureBottomSheet(false);
-                  setLocalSignature(null);
-                }}
-              >
-                <Trans>Cancel</Trans>
-              </Button>
-            </div>
+          <div className="flex space-x-2 border-t border-gray-200 px-4 pb-4 pt-3">
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!localSignature}
+              onClick={() => onDialogSignClick()}
+            >
+              <Trans>Sign</Trans>
+            </Button>
+            <Button
+              type="button"
+              className="w-full"
+              variant="secondary"
+              onClick={() => {
+                setShowSignatureBottomSheet(false);
+                setLocalSignature(null);
+              }}
+            >
+              <Trans>Cancel</Trans>
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
