@@ -130,16 +130,16 @@ export const DocumentSigningPageView = ({
     <DocumentSigningRecipientProvider recipient={recipient} targetSigner={selectedSigner ?? null}>
       <div className="mx-auto w-full max-w-screen-xl pt-0">
         <div className="bg-background z-9999 fixed left-0 top-0 w-full border-b border-gray-200 shadow">
-          <div className="mx-auto flex w-full max-w-screen-xl flex-row items-center justify-between px-3 py-3 md:px-6 md:py-4">
-            <div className="flex flex-col">
+          <div className="mx-auto flex w-full max-w-screen-xl flex-row items-center justify-between gap-3 px-3 py-3 md:px-6 md:py-4">
+            <div className="flex min-w-0 flex-1 flex-col">
               <h1
-                className="block max-w-[16rem] truncate text-lg font-semibold md:max-w-[30rem] md:text-2xl lg:text-3xl"
+                className="block w-full truncate text-lg font-semibold md:text-2xl lg:text-3xl"
                 title={document.title}
               >
                 {document.title}
               </h1>
 
-              <span className="text-muted-foreground mt-1 max-w-[50ch] text-xs md:text-sm">
+              <span className="text-muted-foreground mt-1 block max-w-[50ch] truncate text-xs md:text-sm">
                 {match(recipient.role)
                   .with(RecipientRole.VIEWER, () =>
                     document.teamId && !shouldUseTeamDetails ? (
@@ -169,7 +169,7 @@ export const DocumentSigningPageView = ({
               </span>
             </div>
 
-            <div className="ml-4 flex items-center">
+            <div className="flex shrink-0 items-center">
               <DocumentSigningNextField
                 document={document}
                 recipient={recipient}
