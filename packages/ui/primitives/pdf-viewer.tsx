@@ -11,7 +11,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 import { PDF_VIEWER_PAGE_SELECTOR } from '@documenso/lib/constants/pdf-viewer';
-import { getFile } from '@documenso/lib/universal/upload/get-file';
+import { getFileSource } from '@documenso/lib/universal/upload/get-file';
 
 import { cn } from '../lib/utils';
 import { useToast } from './use-toast';
@@ -25,6 +25,21 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.js',
   import.meta.url,
 ).toString();
+
+// Stream PDFs via HTTP Range and skip the background full-document prefetch so
+// only the visible page(s) live in memory at once. Required for large PDFs in
+// iOS Safari iframes (per-iframe heap cap ~250–384 MB).
+// Kept at module scope: react-pdf re-fetches if `options` identity changes.
+const PDF_DOCUMENT_OPTIONS = {
+  disableAutoFetch: true,
+  disableStream: false,
+} as const;
+
+// Cap the canvas device pixel ratio at 2x. iPhone Pro screens report 3, which
+// produces a 9x canvas raster — easily hundreds of MB on a full-page render.
+// 2x is visually indistinguishable for static signing content.
+const PDF_DEVICE_PIXEL_RATIO =
+  typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
 
 export type OnPDFViewerPageClick = (_event: {
   pageNumber: number;
@@ -66,8 +81,8 @@ export const PDFViewer = ({
 
   const $el = useRef<HTMLDivElement>(null);
 
-  const [isDocumentBytesLoading, setIsDocumentBytesLoading] = useState(false);
-  const [documentBytes, setDocumentBytes] = useState<Uint8Array | null>(null);
+  const [isPdfSourceLoading, setIsPdfSourceLoading] = useState(false);
+  const [pdfFile, setPdfFile] = useState<ArrayBuffer | { url: string } | null>(null);
 
   const [width, setWidth] = useState(0);
   const [numPages, setNumPages] = useState(0);
@@ -78,7 +93,7 @@ export const PDFViewer = ({
     [documentData.data, documentData.type],
   );
 
-  const isLoading = isDocumentBytesLoading || !documentBytes;
+  const isLoading = isPdfSourceLoading || !pdfFile;
 
   const onDocumentLoaded = (doc: LoadedPDFDocument) => {
     setNumPages(doc.numPages);
@@ -142,15 +157,23 @@ export const PDFViewer = ({
   }, []);
 
   useEffect(() => {
-    const fetchDocumentBytes = async () => {
+    const fetchPdfSource = async () => {
       try {
-        setIsDocumentBytesLoading(true);
+        setIsPdfSourceLoading(true);
 
-        const bytes = await getFile(memoizedData);
+        const source = await getFileSource(memoizedData);
 
-        setDocumentBytes(bytes);
+        // For S3-backed docs, hand pdfjs the URL so it can range-stream pages
+        // on demand instead of materialising the whole file in memory. Inline
+        // BYTES/BYTES_64 still go in as an ArrayBuffer since there's nothing
+        // to stream.
+        if (source.kind === 'url') {
+          setPdfFile({ url: source.url });
+        } else {
+          setPdfFile(source.bytes.buffer);
+        }
 
-        setIsDocumentBytesLoading(false);
+        setIsPdfSourceLoading(false);
       } catch (err) {
         console.error(err);
 
@@ -162,7 +185,7 @@ export const PDFViewer = ({
       }
     };
 
-    void fetchDocumentBytes();
+    void fetchPdfSource();
   }, [memoizedData, toast]);
 
   return (
@@ -178,7 +201,8 @@ export const PDFViewer = ({
       ) : (
         <>
           <PDFDocument
-            file={documentBytes.buffer}
+            file={pdfFile}
+            options={PDF_DOCUMENT_OPTIONS}
             className={cn('w-full overflow-hidden rounded', {
               'h-[80vh] max-h-[60rem]': numPages === 0,
             })}
@@ -226,6 +250,7 @@ export const PDFViewer = ({
                     <PDFPage
                       pageNumber={i + 1}
                       width={width}
+                      devicePixelRatio={PDF_DEVICE_PIXEL_RATIO}
                       renderAnnotationLayer={false}
                       renderTextLayer={false}
                       loading={() => ''}
