@@ -26,13 +26,18 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-// Stream PDFs via HTTP Range and skip the background full-document prefetch so
-// only the visible page(s) live in memory at once. Required for large PDFs in
-// iOS Safari iframes (per-iframe heap cap ~250–384 MB).
+// Only request the byte ranges we actually need (visible pages) so the worker
+// never materialises the whole PDF in memory. Both flags are load-bearing:
+// pdfjs documents that `disableAutoFetch` is a no-op while streaming is on —
+// once a fetch stream is open the worker keeps consuming bytes until the file
+// is fully read, regardless of auto-fetch. Setting `disableStream: true` switches
+// pdfjs to XHR-based range requests, after which `disableAutoFetch: true` actually
+// suppresses the background prefetch. Required for large PDFs in iOS Safari
+// iframes (per-iframe heap cap ~250–384 MB).
 // Kept at module scope: react-pdf re-fetches if `options` identity changes.
 const PDF_DOCUMENT_OPTIONS = {
   disableAutoFetch: true,
-  disableStream: false,
+  disableStream: true,
 } as const;
 
 // Cap the canvas device pixel ratio at 2x. iPhone Pro screens report 3, which
